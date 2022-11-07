@@ -2,10 +2,19 @@ package accountService;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 
+@Entity
+@Table(name = "Accounts")
 public class Account {
+    @Id
+    @GeneratedValue
+    private long id;
     @NotEmpty
     private String name;
     @NotEmpty
@@ -16,7 +25,9 @@ public class Account {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
-
+    public long getId() {
+        return id;
+    }
     public String getName() {
         return name;
     }
