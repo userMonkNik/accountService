@@ -1,6 +1,8 @@
-package accountService;
+package accountService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -24,6 +26,16 @@ public class Account {
     @NotEmpty
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+    @JsonIgnore
+    private String grantedAuthority;
+
+    public String getGrantedAuthority() {
+        return grantedAuthority;
+    }
+
+    public void setGrantedAuthority(String grantedAuthority) {
+        this.grantedAuthority = grantedAuthority;
+    }
 
     public long getId() {
         return id;
