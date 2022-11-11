@@ -3,7 +3,7 @@ package accountService.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(code = HttpStatus.BAD_REQUEST,reason = "User exist!")
+@ResponseStatus(code = HttpStatus.BAD_REQUEST,reason = "User exists!")
 public class AccountExistsException extends RuntimeException {
 
     public AccountExistsException() {
