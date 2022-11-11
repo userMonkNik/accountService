@@ -1,12 +1,12 @@
-package accountService.service;
+package account.service;
 
-import accountService.dto.ChangePasswordResponse;
-import accountService.dto.NewPassword;
-import accountService.entity.Account;
-import accountService.exception.AccountExistsException;
-import accountService.exception.AccountPasswordException;
-import accountService.repository.AccountRepository;
-import accountService.repository.BreachedPasswordRepository;
+import account.dto.ChangePasswordResponse;
+import account.dto.NewPassword;
+import account.entity.Account;
+import account.exception.AccountExistsException;
+import account.exception.AccountPasswordException;
+import account.repository.AccountRepository;
+import account.repository.BreachedPasswordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;

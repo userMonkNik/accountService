@@ -1,4 +1,4 @@
-package accountService.repository;
+package account.repository;
 
 import org.springframework.stereotype.Component;
 

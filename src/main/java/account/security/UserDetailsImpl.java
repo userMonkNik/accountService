@@ -1,6 +1,6 @@
-package accountService.security;
+package account.security;
 
-import accountService.entity.Account;
+import account.entity.Account;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

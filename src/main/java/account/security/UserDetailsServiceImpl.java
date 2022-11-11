@@ -1,9 +1,8 @@
-package accountService.security;
+package account.security;
 
-import accountService.entity.Account;
-import accountService.exception.AccountNotExistsException;
-import accountService.repository.AccountRepository;
-import accountService.security.UserDetailsImpl;
+import account.entity.Account;
+import account.exception.AccountNotExistsException;
+import account.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

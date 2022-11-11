@@ -1,4 +1,4 @@
-package accountService.dto;
+package account.dto;
 
 import javax.validation.constraints.Size;
 

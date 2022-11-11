@@ -1,10 +1,10 @@
-package accountService.controller;
+package account.controller;
 
-import accountService.CustomError;
-import accountService.dto.ChangePasswordResponse;
-import accountService.dto.NewPassword;
-import accountService.entity.Account;
-import accountService.service.AccountService;
+import account.CustomError;
+import account.dto.ChangePasswordResponse;
+import account.dto.NewPassword;
+import account.entity.Account;
+import account.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package accountService.dto;
+package account.dto;
 
 public class ChangePasswordResponse {
     private String email;
