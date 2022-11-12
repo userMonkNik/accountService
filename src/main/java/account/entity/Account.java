@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Entity
@@ -21,8 +22,10 @@ public class Account {
     private String name;
     @NotEmpty(message = "Lastname cannot be empty")
     private String lastname;
+    @NotNull
     @Email(regexp = ".+(@acme.com)", message = "Email must have corporate domain 'acme.com'")
     private String email;
+    @NotEmpty
     @Size(min = 12, message = "The password length must be at least 12 chars!")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;

@@ -32,11 +32,11 @@ public class AccountService {
 
     public Account signup(Account account) {
 
-        if (accountRepository.existsByEmail(account.getEmail().toLowerCase(Locale.ROOT))) {
-            throw new AccountExistsException();
-
-        } else if (breachedPasswordRepository.containsPassword(account.getPassword())) {
+        if (breachedPasswordRepository.containsPassword(account.getPassword())) {
             throw new AccountPasswordException("The password is in the hacker's database!");
+
+        } else if (accountRepository.existsByEmail(account.getEmail().toLowerCase(Locale.ROOT))) {
+            throw new AccountExistsException();
         }
 
         account.setPassword(passwordEncoder.encode(account.getPassword()));
