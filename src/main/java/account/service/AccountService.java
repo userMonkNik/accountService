@@ -1,18 +1,16 @@
 package account.service;
 
-import account.dto.AddPaymentResponse;
+import account.dto.PaymentResponse;
 import account.dto.ChangePasswordResponse;
 import account.dto.NewPassword;
 import account.entity.Account;
 import account.entity.PaymentDetails;
-import account.exception.AccountExistsException;
-import account.exception.AccountNotExistsException;
-import account.exception.AccountPasswordException;
-import account.exception.PeriodExistsException;
+import account.exception.*;
 import account.repository.AccountRepository;
 import account.repository.BreachedPasswordRepository;
 import account.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.config.web.servlet.oauth2.resourceserver.OpaqueTokenDsl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,33 +75,47 @@ public class AccountService {
     }
 
     @Transactional
-    public AddPaymentResponse transactionalAddPaymentDetails(List<PaymentDetails> paymentDetailsList) {
+    public PaymentResponse transactionalAddPaymentDetails(List<PaymentDetails> paymentDetailsList) {
 
         for (PaymentDetails payment : paymentDetailsList) {
 
             Account account = getAccountByEmail(payment.getEmployee());
 
-            if (isUniquePeriod(account, payment)) {
+            if (getPaymentDetailsByPeriod(account, payment).isPresent()) {
+
+                throw new PeriodExistsException(payment.getPeriod() + "," + account.getEmail());
+            } else {
 
                 payment.setAccount(account);
                 paymentRepository.save(payment);
             }
         }
 
-        return new AddPaymentResponse();
+        return new PaymentResponse("Added successfully!");
     }
 
-    private boolean isUniquePeriod(Account account, PaymentDetails payment) {
+    public PaymentResponse updatePaymentDetails(PaymentDetails payment) {
 
-        Optional<PaymentDetails> paymentWithSamePeriod = account.getSalaryDetailsList().stream()
+        Account account = getAccountByEmail(payment.getEmployee());
+        Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, payment);
+
+        if (paymentDetails.isEmpty()) {
+
+            throw new PaymentNotExistException();
+        }
+
+        paymentDetails.get().setSalary(payment.getSalary());
+        accountRepository.save(account);
+
+        return new PaymentResponse("Updated successfully!");
+    }
+
+    private Optional<PaymentDetails> getPaymentDetailsByPeriod(Account account, PaymentDetails payment) {
+
+        return account.getSalaryDetailsList().stream()
                 .filter(paymentEntry -> paymentEntry.getPeriod().equals(payment.getPeriod()))
                 .findFirst();
 
-        if (paymentWithSamePeriod.isPresent()) {
-
-            throw new PeriodExistsException(payment.getPeriod() + "," + account.getEmail());
-        }
-        return true;
     }
 
     private Account getAccountByEmail(String email) {
