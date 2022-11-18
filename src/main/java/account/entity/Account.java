@@ -3,14 +3,9 @@ package account.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.persistence.*;
+import javax.validation.constraints.*;
+import java.util.List;
 
 @Entity
 @Table(name = "Accounts")
@@ -25,12 +20,23 @@ public class Account {
     @NotNull
     @Email(regexp = ".+(@acme.com)", message = "Email must have corporate domain 'acme.com'")
     private String email;
-    @NotEmpty
+    @NotNull
     @Size(min = 12, message = "The password length must be at least 12 chars!")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @JsonIgnore
     private String grantedAuthority;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    private List<PaymentDetails> salaryDetailsList;
+
+    public List<PaymentDetails> getSalaryDetailsList() {
+        return salaryDetailsList;
+    }
+
+    public void setSalaryDetailsList(List<PaymentDetails> salaryDetailsList) {
+        this.salaryDetailsList = salaryDetailsList;
+    }
 
     public String getGrantedAuthority() {
         return grantedAuthority;

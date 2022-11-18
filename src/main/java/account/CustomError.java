@@ -1,14 +1,16 @@
 package account;
 
 
+import java.util.List;
+
 public class CustomError {
     private final String timestamp;
     private final int status;
     private final String error;
-    private final String message;
+    private final List<String> message;
     private final String path;
 
-    public CustomError(String timestamp, int status, String error, String message, String path) {
+    public CustomError(String timestamp, int status, String error, List<String> message, String path) {
         this.timestamp = timestamp;
         this.status = status;
         this.error = error;
@@ -28,7 +30,7 @@ public class CustomError {
         return error;
     }
 
-    public String getMessage() {
+    public List<String> getMessage() {
         return message;
     }
 
