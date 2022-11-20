@@ -5,9 +5,11 @@ import account.dto.NewPassword;
 import account.entity.Account;
 import account.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +35,7 @@ public class AuthController {
     @PostMapping("/changepass")
     public ResponseEntity<ChangePasswordResponse> changePassword(Authentication auth, @Valid @RequestBody NewPassword password) {
 
+        System.out.println(auth.getName());
         return new ResponseEntity<>(
                 accountService.changePassword(auth.getName(), password),
                 HttpStatus.OK);

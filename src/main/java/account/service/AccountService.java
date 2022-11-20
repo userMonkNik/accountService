@@ -1,5 +1,6 @@
 package account.service;
 
+import account.dto.AccountPaymentDetails;
 import account.dto.PaymentResponse;
 import account.dto.ChangePasswordResponse;
 import account.dto.NewPassword;
@@ -15,6 +16,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -71,7 +74,7 @@ public class AccountService {
         account.setPassword(passwordEncoder.encode(password.getPassword()));
         accountRepository.save(account);
 
-        return new ChangePasswordResponse(currentUserEmail, "The password has been updated successfully");
+        return new ChangePasswordResponse(account.getEmail(), "The password has been updated successfully");
     }
 
     @Transactional
@@ -79,9 +82,9 @@ public class AccountService {
 
         for (PaymentDetails payment : paymentDetailsList) {
 
-            Account account = getAccountByEmail(payment.getEmployee());
+            Account account = getAccountByEmail(payment.getEmployee().toLowerCase(Locale.ROOT));
 
-            if (getPaymentDetailsByPeriod(account, payment).isPresent()) {
+            if (getPaymentDetailsByPeriod(account, payment.getPeriod()).isPresent()) {
 
                 throw new PeriodExistsException(payment.getPeriod() + "," + account.getEmail());
             } else {
@@ -97,7 +100,7 @@ public class AccountService {
     public PaymentResponse updatePaymentDetails(PaymentDetails payment) {
 
         Account account = getAccountByEmail(payment.getEmployee());
-        Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, payment);
+        Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, payment.getPeriod());
 
         if (paymentDetails.isEmpty()) {
 
@@ -110,17 +113,40 @@ public class AccountService {
         return new PaymentResponse("Updated successfully!");
     }
 
-    private Optional<PaymentDetails> getPaymentDetailsByPeriod(Account account, PaymentDetails payment) {
+    public AccountPaymentDetails getEmployeePaymentDetailsByPeriod(String currentUserEmail, String period) {
+
+        Account account = getAccountByEmail(currentUserEmail);
+        Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, period);
+
+        if (paymentDetails.isEmpty()) {
+
+            throw new PaymentNotExistException();
+        }
+
+        return new AccountPaymentDetails(
+                account.getName(),
+                account.getLastname(),
+                parseToYearMonth(period),
+                paymentDetails.get().getSalary()
+        );
+    }
+
+    private YearMonth parseToYearMonth(String period) {
+
+        return YearMonth.parse(period, DateTimeFormatter.ofPattern("MM-yyyy"));
+    }
+
+    private Optional<PaymentDetails> getPaymentDetailsByPeriod(Account account, String period) {
 
         return account.getSalaryDetailsList().stream()
-                .filter(paymentEntry -> paymentEntry.getPeriod().equals(payment.getPeriod()))
+                .filter(paymentEntry -> paymentEntry.getPeriod().equals(period))
                 .findFirst();
 
     }
 
     private Account getAccountByEmail(String email) {
 
-        Optional<Account> account = accountRepository.findByEmail(email);
+        Optional<Account> account = accountRepository.findByEmail(email.toLowerCase(Locale.ROOT));
 
         if (account.isPresent()) {
 

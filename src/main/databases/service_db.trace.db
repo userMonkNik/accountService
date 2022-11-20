@@ -552,3 +552,27 @@ SELECT * FROM payment_details WHERE employee="testemail@acme.com" [42122-214]
 org.h2.jdbc.JdbcSQLSyntaxErrorException: Таблица "PAYMENTDETAILS" не найдена
 Table "PAYMENTDETAILS" not found; SQL statement:
 SELECT * FROM paymentDetails WHERE employee = ? AND period = ? [42102-214]
+2022-11-20 21:10:58 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Синтаксическая ошибка в выражении SQL "[*]SELETE FROM PAYMENT_DETAILS"; ожидалось "SAVEPOINT, SCRIPT, SHUTDOWN, SHOW"
+Syntax error in SQL statement "[*]SELETE FROM PAYMENT_DETAILS"; expected "SAVEPOINT, SCRIPT, SHUTDOWN, SHOW"; SQL statement:
+SELETE FROM PAYMENT_DETAILS [42001-214]
+2022-11-20 22:42:38 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Синтаксическая ошибка в выражении SQL "DELETE FROM PAYMENT_DETAILS\000d\000aDELETE [*]FROM ACCOUNTS"
+Syntax error in SQL statement "DELETE FROM PAYMENT_DETAILS\000d\000aDELETE [*]FROM ACCOUNTS"; SQL statement:
+DELETE FROM PAYMENT_DETAILS
+DELETE FROM ACCOUNTS [42000-214]
+2022-11-20 22:42:47 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Синтаксическая ошибка в выражении SQL "DELETE FROM PAYMENT_DETAILS[*],\000d\000aDELETE FROM ACCOUNTS"
+Syntax error in SQL statement "DELETE FROM PAYMENT_DETAILS[*],\000d\000aDELETE FROM ACCOUNTS"; SQL statement:
+DELETE FROM PAYMENT_DETAILS,
+DELETE FROM ACCOUNTS [42000-214]
+2022-11-20 22:42:48 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Синтаксическая ошибка в выражении SQL "DELETE FROM PAYMENT_DETAILS[*],\000d\000aDELETE FROM ACCOUNTS"
+Syntax error in SQL statement "DELETE FROM PAYMENT_DETAILS[*],\000d\000aDELETE FROM ACCOUNTS"; SQL statement:
+DELETE FROM PAYMENT_DETAILS,
+DELETE FROM ACCOUNTS [42000-214]
+2022-11-20 22:42:52 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Синтаксическая ошибка в выражении SQL "DELETE FROM PAYMENT_DETAILS[*],\000d\000aDELETE FROM ACCOUNTS"
+Syntax error in SQL statement "DELETE FROM PAYMENT_DETAILS[*],\000d\000aDELETE FROM ACCOUNTS"; SQL statement:
+DELETE FROM PAYMENT_DETAILS,
+DELETE FROM ACCOUNTS [42000-214]
