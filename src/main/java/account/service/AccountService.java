@@ -1,9 +1,9 @@
 package account.service;
 
 import account.dto.AccountPaymentDetails;
-import account.dto.PaymentResponse;
 import account.dto.ChangePasswordResponse;
 import account.dto.NewPassword;
+import account.dto.PaymentResponse;
 import account.entity.Account;
 import account.entity.PaymentDetails;
 import account.exception.*;
@@ -11,16 +11,17 @@ import account.repository.AccountRepository;
 import account.repository.BreachedPasswordRepository;
 import account.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.config.web.servlet.oauth2.resourceserver.OpaqueTokenDsl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
@@ -128,6 +129,30 @@ public class AccountService {
                 account.getLastname(),
                 parseToYearMonth(period),
                 paymentDetails.get().getSalary()
+        );
+    }
+
+    public List<AccountPaymentDetails> getAllEmployeePayments(String currentUserEmail) {
+
+        Account account = getAccountByEmail(currentUserEmail);
+
+        return account.getSalaryDetailsList().stream()
+                .map(paymentDetails -> parseToAccountPaymentDetails(
+                        account.getName(),
+                        account.getLastname(),
+                        paymentDetails
+                ))
+                .sorted(Comparator.comparing(AccountPaymentDetails::getYearMonthPeriod).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private AccountPaymentDetails parseToAccountPaymentDetails(String name, String lastName, PaymentDetails payment) {
+
+        return new AccountPaymentDetails(
+                name,
+                lastName,
+                parseToYearMonth(payment.getPeriod()),
+                payment.getSalary()
         );
     }
 

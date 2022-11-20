@@ -33,7 +33,11 @@ public class AccountPaymentDetails {
         return period.getMonth() + "-" + period.getYear();
     }
 
-    public long getSalary() {
-        return salary;
+    public YearMonth getYearMonthPeriod() {
+        return period;
+    }
+
+    public String getSalary() {
+        return String.format("%d dollar(s) %d cent(s)", salary / 100, salary % 100);
     }
 }
