@@ -35,7 +35,6 @@ public class AuthController {
     @PostMapping("/changepass")
     public ResponseEntity<ChangePasswordResponse> changePassword(Authentication auth, @Valid @RequestBody NewPassword password) {
 
-        System.out.println(auth.getName());
         return new ResponseEntity<>(
                 accountService.changePassword(auth.getName(), password),
                 HttpStatus.OK);

@@ -36,9 +36,10 @@ public class ValidationExceptionHandler extends ResponseEntityExceptionHandler {
                 new CustomError(
                 LocalDateTime.now().toString(),
                 HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.name(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 errorList,
-                request.getDescription(false))
+                request.getDescription(false)
+                        .substring(4))
                 ,HttpStatus.BAD_REQUEST);
     }
 
@@ -54,8 +55,9 @@ public class ValidationExceptionHandler extends ResponseEntityExceptionHandler {
         return new CustomError(
                 LocalDateTime.now().toString(),
                 HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.name(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 errorList,
-                request.getDescription(false));
+                request.getDescription(false)
+                        .substring(4));
     }
 }
