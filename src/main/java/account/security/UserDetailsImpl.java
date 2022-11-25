@@ -1,8 +1,6 @@
 package account.security;
 
-import account.entity.Account;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -11,14 +9,14 @@ import java.util.List;
 public class UserDetailsImpl implements UserDetails {
     private final String email;
     private final String password;
-    private final List<GrantedAuthority> authorities;
+    private final Collection<? extends GrantedAuthority> authorities;
 
 
-    public UserDetailsImpl(Account account) {
+    public UserDetailsImpl(String email, String password, Collection<? extends GrantedAuthority> authorities) {
 
-        this.email = account.getEmail();
-        this.password = account.getPassword();
-        this.authorities = List.of(new SimpleGrantedAuthority(account.getGrantedAuthority()));
+        this.email = email;
+        this.password = password;
+        this.authorities = authorities;
     }
 
     @Override

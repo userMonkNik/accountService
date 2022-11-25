@@ -34,6 +34,7 @@ public class WebSecurityConfiguration {
                 .csrf().disable().headers().frameOptions().disable()
                 .and()
                 .authorizeRequests()
+                .antMatchers("/api/empl/payment").hasRole("USER")
                 .antMatchers("/api/acct/**").permitAll()
                 .antMatchers("/api/auth/signup").permitAll()
                 .antMatchers("/h2/**").permitAll()

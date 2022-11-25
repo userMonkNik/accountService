@@ -1,19 +1,19 @@
 package account.service;
 
-import account.dto.AccountPaymentDetails;
-import account.dto.ChangePasswordResponse;
-import account.dto.NewPassword;
-import account.dto.PaymentResponse;
+import account.dto.*;
 import account.entity.Account;
 import account.entity.PaymentDetails;
+import account.entity.Role;
 import account.exception.*;
 import account.repository.AccountRepository;
 import account.repository.BreachedPasswordRepository;
 import account.repository.PaymentRepository;
+import account.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -29,18 +29,21 @@ public class AccountService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final BreachedPasswordRepository breachedPasswordRepository;
     private final PaymentRepository paymentRepository;
+    private final RoleRepository roleRepository;
 
     @Autowired
      public AccountService(
              AccountRepository accountRepository,
              BCryptPasswordEncoder passwordEncoder,
              BreachedPasswordRepository breachedPasswordRepository,
-             PaymentRepository paymentRepository) {
+             PaymentRepository paymentRepository,
+             RoleRepository roleRepository) {
 
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.breachedPasswordRepository = breachedPasswordRepository;
         this.paymentRepository = paymentRepository;
+        this.roleRepository = roleRepository;
     }
 
     public Account signup(Account account) {
@@ -52,8 +55,10 @@ public class AccountService {
             throw new AccountExistsException();
         }
 
+        Role userRole = roleRepository.findByName("User");
+
         account.setPassword(passwordEncoder.encode(account.getPassword()));
-        account.setGrantedAuthority("ROLE_USER");
+        account.setRoles(List.of(userRole));
         account.setEmail(account.getEmail().toLowerCase(Locale.ROOT));
 
         return accountRepository.save(account);
@@ -98,7 +103,8 @@ public class AccountService {
         return new PaymentResponse("Added successfully!");
     }
 
-    public PaymentResponse updatePaymentDetails(PaymentDetails payment) {
+    public PaymentResponse updatePaymentDetails(PaymentDetails payment)
+            throws PaymentNotExistException {
 
         Account account = getAccountByEmail(payment.getEmployee());
         Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, payment.getPeriod());
@@ -114,7 +120,8 @@ public class AccountService {
         return new PaymentResponse("Updated successfully!");
     }
 
-    public AccountPaymentDetails getEmployeePaymentDetailsByPeriod(String currentUserEmail, String period) {
+    public AccountPaymentDetails getEmployeePaymentDetailsByPeriod(String currentUserEmail, String period)
+            throws PaymentNotExistException{
 
         Account account = getAccountByEmail(currentUserEmail);
         Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, period);
@@ -132,6 +139,14 @@ public class AccountService {
         );
     }
 
+    public List<Account> getAllUsersSortedById() {
+
+        return accountRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(Account::getId))
+                .collect(Collectors.toList());
+    }
+
     public List<AccountPaymentDetails> getAllEmployeePayments(String currentUserEmail) {
 
         Account account = getAccountByEmail(currentUserEmail);
@@ -144,6 +159,25 @@ public class AccountService {
                 ))
                 .sorted(Comparator.comparing(AccountPaymentDetails::getYearMonthPeriod).reversed())
                 .collect(Collectors.toList());
+    }
+
+    public AccountResponse deleteAccount(String email) {
+
+        Account account = getAccountByEmail(email);
+
+        if (isAdministrator(account)) {
+
+            throw new RoleException("Can't remove ADMINISTRATOR role!");
+        }
+
+        accountRepository.delete(account);
+
+        return new AccountResponse(email, "Deleted successfully!");
+    }
+
+    private boolean isAdministrator(Account account) {
+
+        return account.getRoles().contains("ADMINISTRATOR");
     }
 
     private AccountPaymentDetails parseToAccountPaymentDetails(String name, String lastName, PaymentDetails payment) {
@@ -169,7 +203,7 @@ public class AccountService {
 
     }
 
-    private Account getAccountByEmail(String email) {
+    private Account getAccountByEmail(String email) throws AccountNotExistsException {
 
         Optional<Account> account = accountRepository.findByEmail(email.toLowerCase(Locale.ROOT));
 

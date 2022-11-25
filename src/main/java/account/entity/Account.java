@@ -1,11 +1,11 @@
 package account.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Accounts")
@@ -24,10 +24,13 @@ public class Account {
     @Size(min = 12, message = "The password length must be at least 12 chars!")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
-    @JsonIgnore
-    private String grantedAuthority;
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.EAGER)
+    @JoinTable(name = "account_roles",
+            joinColumns = @JoinColumn(name = "account_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private List<Role> roles;
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private List<PaymentDetails> salaryDetailsList;
 
     public List<PaymentDetails> getSalaryDetailsList() {
@@ -38,12 +41,14 @@ public class Account {
         this.salaryDetailsList = salaryDetailsList;
     }
 
-    public String getGrantedAuthority() {
-        return grantedAuthority;
+    public List<String> getRoles() {
+        return roles.stream()
+                .map(Role::getCode)
+                .collect(Collectors.toList());
     }
 
-    public void setGrantedAuthority(String grantedAuthority) {
-        this.grantedAuthority = grantedAuthority;
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 
     public long getId() {

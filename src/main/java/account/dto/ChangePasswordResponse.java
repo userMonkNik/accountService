@@ -9,16 +9,6 @@ public class ChangePasswordResponse {
         this.status = status;
     }
 
-    public ChangePasswordResponse() {}
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public String getEmail() {
         return email;
     }
