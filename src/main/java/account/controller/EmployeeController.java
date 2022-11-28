@@ -26,7 +26,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/payment")
-    public ResponseEntity<List<AccountPaymentDetails>> getPaymentByPeriod(Authentication auth,
+    public ResponseEntity<?> getPaymentByPeriod(Authentication auth,
                                                                     @Pattern(regexp = "(0\\d|1[0-2])-2\\d{3}", message = "Wrong Date!")
                                                                     @RequestParam(required = false) String period) {
         if (period == null) {
@@ -34,7 +34,7 @@ public class EmployeeController {
             return new ResponseEntity<>(accountService.getAllEmployeePayments(auth.getName()), HttpStatus.OK);
         } else {
 
-            return new ResponseEntity<>(List.of(accountService.getEmployeePaymentDetailsByPeriod(auth.getName(), period)),
+            return new ResponseEntity<>(accountService.getEmployeePaymentDetailsByPeriod(auth.getName(), period),
                     HttpStatus.OK);
         }
     }

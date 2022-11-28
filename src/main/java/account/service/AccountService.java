@@ -9,16 +9,17 @@ import account.repository.AccountRepository;
 import account.repository.BreachedPasswordRepository;
 import account.repository.PaymentRepository;
 import account.repository.RoleRepository;
-import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -99,6 +100,7 @@ public class AccountService {
             if (getPaymentDetailsByPeriod(account, payment.getPeriod()).isPresent()) {
 
                 throw new PeriodExistsException(payment.getPeriod() + "," + account.getEmail());
+
             } else {
 
                 payment.setAccount(account);
@@ -174,6 +176,7 @@ public class AccountService {
         if (role.getOperation().equals("GRANT")) {
 
             return grantRole(account, role.getRole());
+
         } else {
 
             return removeRole(account, role.getRole());
@@ -198,10 +201,11 @@ public class AccountService {
         List<String> currentRoles = account.getRoles();
 
         if (currentRoles.contains(grantedRole)) {
+
             throw new RoleException("Role already granted");
 
         } else if (isAdministrator(currentRoles) ||
-                !isAdministrator(currentRoles) && grantedRole.equals("ADMINISTRATOR")) {
+                grantedRole.equals("ROLE_ADMINISTRATOR")) {
 
             throw new RoleException("The user cannot combine administrative and business roles!");
         }
@@ -216,18 +220,19 @@ public class AccountService {
     private Account removeRole(Account account, String roleToRemove) {
         List<String> currentRoles = account.getRoles();
 
-        if (currentRoles.size() == 1) {
-
-            throw new RoleException("The user must have at least one role!");
-
-        } else if (isAdministrator(currentRoles) &&
-                roleToRemove.equals("ADMINISTRATOR")) {
+        if (isAdministrator(currentRoles) &&
+                roleToRemove.equals("ROLE_ADMINISTRATOR")) {
 
             throw new RoleException("Can't remove ADMINISTRATOR role!");
 
         } else if (!currentRoles.contains(roleToRemove)) {
 
             throw new RoleException("The user does not have a role!");
+
+        } else if (currentRoles.size() == 1) {
+
+            throw new RoleException("The user must have at least one role!");
+
         }
 
         Role role = getAccountRole(roleToRemove);
@@ -242,7 +247,7 @@ public class AccountService {
 
     private boolean isAdministrator(List<String> roles) {
 
-        return roles.contains("ADMINISTRATOR");
+        return roles.contains("ROLE_ADMINISTRATOR");
     }
 
     private AccountPaymentDetails parseToAccountPaymentDetails(String name, String lastName, PaymentDetails payment) {
@@ -275,6 +280,7 @@ public class AccountService {
         if (optionalAccount.isPresent()) {
 
             return  optionalAccount.get();
+
         } else {
 
             throw new AccountNotExistsException();
@@ -288,6 +294,7 @@ public class AccountService {
         if (optionalRole.isPresent()) {
 
             return optionalRole.get();
+
         } else {
 
             throw new RoleNotExistsException();
