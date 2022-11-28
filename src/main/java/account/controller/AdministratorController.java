@@ -1,13 +1,15 @@
 package account.controller;
 
+import account.dto.AccountResponse;
+import account.dto.ChangeRole;
 import account.entity.Account;
 import account.service.AccountService;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -28,8 +30,14 @@ public class AdministratorController {
     }
 
     @DeleteMapping("/user/{email}")
-    public ResponseEntity<?> deleteUser(@PathVariable String email) {
+    public ResponseEntity<AccountResponse> deleteUser(@PathVariable String email) {
 
         return new ResponseEntity<>(accountService.deleteAccount(email), HttpStatus.OK);
+    }
+
+    @PutMapping("/user/role")
+    public ResponseEntity<Account> putUserRole(@Valid @RequestBody ChangeRole role) {
+
+        return new ResponseEntity<>(accountService.changeUserRole(role), HttpStatus.OK);
     }
 }

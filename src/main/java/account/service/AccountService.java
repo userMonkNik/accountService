@@ -9,6 +9,7 @@ import account.repository.AccountRepository;
 import account.repository.BreachedPasswordRepository;
 import account.repository.PaymentRepository;
 import account.repository.RoleRepository;
+import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,10 +53,18 @@ public class AccountService {
             throw new AccountExistsException();
         }
 
-        Role userRole = roleRepository.findByName("User");
+        Role userRole;
 
+        if (isFirstUser()) {
+
+            userRole = getAccountRole("ROLE_ADMINISTRATOR");
+        } else {
+
+            userRole = getAccountRole("ROLE_USER");
+        }
+
+        account.addRole(userRole);
         account.setPassword(passwordEncoder.encode(account.getPassword()));
-        account.setRoles(List.of(userRole));
         account.setEmail(account.getEmail().toLowerCase(Locale.ROOT));
 
         return accountRepository.save(account);
@@ -161,11 +167,24 @@ public class AccountService {
                 .collect(Collectors.toList());
     }
 
+    public Account changeUserRole(ChangeRole role) {
+
+        Account account = getAccountByEmail(role.getUser());
+
+        if (role.getOperation().equals("GRANT")) {
+
+            return grantRole(account, role.getRole());
+        } else {
+
+            return removeRole(account, role.getRole());
+        }
+    }
+
     public AccountResponse deleteAccount(String email) {
 
         Account account = getAccountByEmail(email);
 
-        if (isAdministrator(account)) {
+        if (isAdministrator(account.getRoles())) {
 
             throw new RoleException("Can't remove ADMINISTRATOR role!");
         }
@@ -175,9 +194,55 @@ public class AccountService {
         return new AccountResponse(email, "Deleted successfully!");
     }
 
-    private boolean isAdministrator(Account account) {
+    private Account grantRole(Account account, String grantedRole) {
+        List<String> currentRoles = account.getRoles();
 
-        return account.getRoles().contains("ADMINISTRATOR");
+        if (currentRoles.contains(grantedRole)) {
+            throw new RoleException("Role already granted");
+
+        } else if (isAdministrator(currentRoles) ||
+                !isAdministrator(currentRoles) && grantedRole.equals("ADMINISTRATOR")) {
+
+            throw new RoleException("The user cannot combine administrative and business roles!");
+        }
+
+
+        Role role = getAccountRole(grantedRole);
+        account.addRole(role);
+
+        return accountRepository.save(account);
+    }
+
+    private Account removeRole(Account account, String roleToRemove) {
+        List<String> currentRoles = account.getRoles();
+
+        if (currentRoles.size() == 1) {
+
+            throw new RoleException("The user must have at least one role!");
+
+        } else if (isAdministrator(currentRoles) &&
+                roleToRemove.equals("ADMINISTRATOR")) {
+
+            throw new RoleException("Can't remove ADMINISTRATOR role!");
+
+        } else if (!currentRoles.contains(roleToRemove)) {
+
+            throw new RoleException("The user does not have a role!");
+        }
+
+        Role role = getAccountRole(roleToRemove);
+        account.removeRole(role);
+
+        return accountRepository.save(account);
+    }
+
+    private boolean isFirstUser() {
+        return accountRepository.findAll().isEmpty();
+    }
+
+    private boolean isAdministrator(List<String> roles) {
+
+        return roles.contains("ADMINISTRATOR");
     }
 
     private AccountPaymentDetails parseToAccountPaymentDetails(String name, String lastName, PaymentDetails payment) {
@@ -205,14 +270,27 @@ public class AccountService {
 
     private Account getAccountByEmail(String email) throws AccountNotExistsException {
 
-        Optional<Account> account = accountRepository.findByEmail(email.toLowerCase(Locale.ROOT));
+        Optional<Account> optionalAccount = accountRepository.findByEmail(email.toLowerCase(Locale.ROOT));
 
-        if (account.isPresent()) {
+        if (optionalAccount.isPresent()) {
 
-            return  account.get();
+            return  optionalAccount.get();
         } else {
 
             throw new AccountNotExistsException();
+        }
+    }
+
+    private Role getAccountRole(String role) throws RoleNotExistsException {
+
+        Optional<Role> optionalRole = roleRepository.findByCode(role);
+
+        if (optionalRole.isPresent()) {
+
+            return optionalRole.get();
+        } else {
+
+            throw new RoleNotExistsException();
         }
     }
 

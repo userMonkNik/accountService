@@ -1,6 +1,5 @@
 package account.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,15 +9,19 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfiguration {
-    public AuthenticationEntryPoint authenticationEntryPoint;
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return new CustomAccessDeniedHandler();
+    }
 
-    @Autowired
-    public WebSecurityConfiguration(AuthenticationEntryPoint authenticationEntryPoint) {
-        this.authenticationEntryPoint = authenticationEntryPoint;
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return new RestAuthenticationEntryPoint();
     }
 
     @Bean
@@ -29,19 +32,21 @@ public class WebSecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.httpBasic()
-                .authenticationEntryPoint(authenticationEntryPoint)
+                .authenticationEntryPoint(authenticationEntryPoint())
                 .and()
                 .csrf().disable().headers().frameOptions().disable()
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/empl/payment").hasRole("USER")
-                .antMatchers("/api/acct/**").permitAll()
+                .antMatchers("/api/admin/**").hasRole("ADMINISTRATOR")
+                .antMatchers("/api/empl/payment").hasAnyRole("USER", "ACCOUNTANT")
+                .antMatchers("/api/acct/**").hasRole("ACCOUNTANT")
                 .antMatchers("/api/auth/signup").permitAll()
                 .antMatchers("/h2/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and().exceptionHandling().accessDeniedHandler(accessDeniedHandler());
 
         return http.build();
     }

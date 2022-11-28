@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,7 @@ public class Account {
     @JoinTable(name = "account_roles",
             joinColumns = @JoinColumn(name = "account_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private List<Role> roles;
+    private List<Role> roles = new ArrayList<>();
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private List<PaymentDetails> salaryDetailsList;
@@ -44,13 +45,19 @@ public class Account {
     public List<String> getRoles() {
         return roles.stream()
                 .map(Role::getCode)
+                .sorted()
                 .collect(Collectors.toList());
     }
 
     public void setRoles(List<Role> roles) {
         this.roles = roles;
     }
-
+    public void addRole(Role role) {
+        roles.add(role);
+    }
+    public void removeRole(Role role) {
+        roles.remove(role);
+    }
     public long getId() {
         return id;
     }

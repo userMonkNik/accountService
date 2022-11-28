@@ -29,7 +29,7 @@ public class AuthController {
         return new ResponseEntity<>(accountService.signup(account), HttpStatus.OK);
     }
 
-    @PutMapping("/changepass")
+    @PostMapping("/changepass")
     public ResponseEntity<ChangePasswordResponse> changePassword(Authentication auth, @Valid @RequestBody NewPassword password) {
 
         return new ResponseEntity<>(
