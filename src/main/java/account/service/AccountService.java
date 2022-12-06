@@ -91,7 +91,7 @@ public class AccountService {
     }
 
     @Transactional
-    public PaymentResponse transactionalAddPaymentDetails(List<PaymentDetails> paymentDetailsList) {
+    public StatusResponse transactionalAddPaymentDetails(List<PaymentDetails> paymentDetailsList) {
 
         for (PaymentDetails payment : paymentDetailsList) {
 
@@ -108,10 +108,10 @@ public class AccountService {
             }
         }
 
-        return new PaymentResponse("Added successfully!");
+        return new StatusResponse("Added successfully!");
     }
 
-    public PaymentResponse updatePaymentDetails(PaymentDetails payment)
+    public StatusResponse updatePaymentDetails(PaymentDetails payment)
             throws PaymentNotExistsException {
 
         Account account = getAccountByEmail(payment.getEmployee());
@@ -125,7 +125,7 @@ public class AccountService {
         paymentDetails.get().setSalary(payment.getSalary());
         accountRepository.save(account);
 
-        return new PaymentResponse("Updated successfully!");
+        return new StatusResponse("Updated successfully!");
     }
 
     public AccountPaymentDetails getEmployeePaymentDetailsByPeriod(String currentUserEmail, String period)
@@ -208,12 +208,38 @@ public class AccountService {
         accountRepository.updateFailedAttempts(0, email);
     }
 
-    public void lockAccount(Account account) {
+    public StatusResponse lockAccount(Account account) {
+
+        if (!account.isAccountNonLocked()) {
+            throw new LockException("Account already blocked.");
+
+        } else if (isAdministrator(account.getRoles())) {
+            throw new LockException("Can't lock the ADMINISTRATOR!");
+        }
 
         account.setAccountNonLocked(false);
         account.setLockTime(new Date());
-
         accountRepository.save(account);
+
+        return new StatusResponse(String.format(
+                "User %s locked!", account.getEmail()
+        ));
+    }
+
+    private StatusResponse unlockAccount(Account account) {
+
+        if (account.isAccountNonLocked()) {
+            throw new LockException("Account already unlocked");
+        }
+
+        account.setAccountNonLocked(true);
+        account.setLockTime(null);
+        account.setFailedAttempt(0);
+        accountRepository.save(account);
+
+        return new StatusResponse(String.format(
+                "User %s unlocked!", account.getEmail()
+        ));
     }
 
     public boolean unlockWhenTimeExpired(Account account) {
@@ -231,6 +257,19 @@ public class AccountService {
         }
 
         return false;
+    }
+
+    public StatusResponse putUserAccess(ChangeAccess changeAccess) throws LockException {
+        Account account = getAccountByEmail(changeAccess.getUser());
+
+        switch (changeAccess.getOperation()) {
+            case "LOCK" :
+                return lockAccount(account);
+            case "UNLOCK" :
+                return unlockAccount(account);
+            default :
+                return null;
+        }
     }
 
     private Account grantRole(Account account, String grantedRole) {

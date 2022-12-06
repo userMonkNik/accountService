@@ -1,7 +1,7 @@
 package account.dto;
 
-public class PaymentResponse {
-    public PaymentResponse(String status) {
+public class StatusResponse {
+    public StatusResponse(String status) {
         this.status = status;
     }
     private String status;

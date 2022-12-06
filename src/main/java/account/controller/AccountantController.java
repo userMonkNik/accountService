@@ -1,6 +1,6 @@
 package account.controller;
 
-import account.dto.PaymentResponse;
+import account.dto.StatusResponse;
 import account.entity.PaymentDetails;
 import account.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +25,14 @@ public class AccountantController {
     }
 
     @PostMapping("/payments")
-    public ResponseEntity<PaymentResponse> addPaymentDetails(@Valid @RequestBody List<PaymentDetails> paymentDetailsList) {
+    public ResponseEntity<StatusResponse> addPaymentDetails(@Valid @RequestBody List<PaymentDetails> paymentDetailsList) {
 
         return new ResponseEntity<>(accountService.transactionalAddPaymentDetails(paymentDetailsList), HttpStatus.OK);
 
     }
 
     @PutMapping("/payments")
-    public ResponseEntity<PaymentResponse> addPaymentDetails(@Valid @RequestBody PaymentDetails paymentDetails) {
+    public ResponseEntity<StatusResponse> addPaymentDetails(@Valid @RequestBody PaymentDetails paymentDetails) {
 
         return new ResponseEntity<>(accountService.updatePaymentDetails(paymentDetails), HttpStatus.OK);
     }

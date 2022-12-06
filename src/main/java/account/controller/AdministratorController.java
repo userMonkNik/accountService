@@ -1,7 +1,9 @@
 package account.controller;
 
 import account.dto.AccountResponse;
+import account.dto.ChangeAccess;
 import account.dto.ChangeRole;
+import account.dto.StatusResponse;
 import account.entity.Account;
 import account.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,5 +41,11 @@ public class AdministratorController {
     public ResponseEntity<Account> putUserRole(@Valid @RequestBody ChangeRole role) {
 
         return new ResponseEntity<>(accountService.changeUserRole(role), HttpStatus.OK);
+    }
+
+    @PutMapping("/user/access")
+    public ResponseEntity<StatusResponse> putUserAccess(@Valid @RequestBody ChangeAccess changeAccess) {
+
+        return new ResponseEntity<>(accountService.putUserAccess(changeAccess), HttpStatus.OK);
     }
 }
