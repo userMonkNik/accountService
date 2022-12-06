@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +26,8 @@ public class AccountService {
     private final BreachedPasswordRepository breachedPasswordRepository;
     private final PaymentRepository paymentRepository;
     private final RoleRepository roleRepository;
+    public static final int MAX_FAILED_ATTEMPTS = 5;
+    private static final long LOCK_TIME_DURATION = 24 * 60 * 60 * 1000;
 
     @Autowired
      public AccountService(
@@ -67,6 +66,7 @@ public class AccountService {
         account.addRole(userRole);
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         account.setEmail(account.getEmail().toLowerCase(Locale.ROOT));
+        account.setAccountNonLocked(true);
 
         return accountRepository.save(account);
     }
@@ -112,14 +112,14 @@ public class AccountService {
     }
 
     public PaymentResponse updatePaymentDetails(PaymentDetails payment)
-            throws PaymentNotExistException {
+            throws PaymentNotExistsException {
 
         Account account = getAccountByEmail(payment.getEmployee());
         Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, payment.getPeriod());
 
         if (paymentDetails.isEmpty()) {
 
-            throw new PaymentNotExistException();
+            throw new PaymentNotExistsException();
         }
 
         paymentDetails.get().setSalary(payment.getSalary());
@@ -129,14 +129,14 @@ public class AccountService {
     }
 
     public AccountPaymentDetails getEmployeePaymentDetailsByPeriod(String currentUserEmail, String period)
-            throws PaymentNotExistException{
+            throws PaymentNotExistsException {
 
         Account account = getAccountByEmail(currentUserEmail);
         Optional<PaymentDetails> paymentDetails = getPaymentDetailsByPeriod(account, period);
 
         if (paymentDetails.isEmpty()) {
 
-            throw new PaymentNotExistException();
+            throw new PaymentNotExistsException();
         }
 
         return new AccountPaymentDetails(
@@ -195,6 +195,42 @@ public class AccountService {
         accountRepository.delete(account);
 
         return new AccountResponse(email, "Deleted successfully!");
+    }
+
+    public void increaseFailedAttempt(Account account) {
+
+        int newFailedAttempt = account.getFailedAttempt() + 1;
+        accountRepository.updateFailedAttempts(newFailedAttempt, account.getEmail());
+    }
+
+    public void resetFailedAttempt(String email) {
+
+        accountRepository.updateFailedAttempts(0, email);
+    }
+
+    public void lockAccount(Account account) {
+
+        account.setAccountNonLocked(false);
+        account.setLockTime(new Date());
+
+        accountRepository.save(account);
+    }
+
+    public boolean unlockWhenTimeExpired(Account account) {
+        long lockTimeInMillis = account.getLockTime().getTime();
+        long currentTimeInMillis = System.currentTimeMillis();
+
+        if (lockTimeInMillis + LOCK_TIME_DURATION < currentTimeInMillis) {
+            account.setAccountNonLocked(true);
+            account.setLockTime(null);
+            account.setFailedAttempt(0);
+
+            accountRepository.save(account);
+
+            return true;
+        }
+
+        return false;
     }
 
     private Account grantRole(Account account, String grantedRole) {
@@ -273,7 +309,7 @@ public class AccountService {
 
     }
 
-    private Account getAccountByEmail(String email) throws AccountNotExistsException {
+    public Account getAccountByEmail(String email) throws AccountNotExistsException {
 
         Optional<Account> optionalAccount = accountRepository.findByEmail(email.toLowerCase(Locale.ROOT));
 

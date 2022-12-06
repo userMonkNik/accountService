@@ -4,19 +4,20 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 
 public class UserDetailsImpl implements UserDetails {
     private final String email;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
+    private final boolean accountNonLocked;
 
 
-    public UserDetailsImpl(String email, String password, Collection<? extends GrantedAuthority> authorities) {
+    public UserDetailsImpl(String email, String password, Collection<? extends GrantedAuthority> authorities, boolean accountNonLocked) {
 
         this.email = email;
         this.password = password;
         this.authorities = authorities;
+        this.accountNonLocked = accountNonLocked;
     }
 
     @Override
@@ -41,7 +42,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return accountNonLocked;
     }
 
     @Override

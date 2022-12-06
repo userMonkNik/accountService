@@ -31,7 +31,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return new UserDetailsImpl(
                     account.get().getEmail(),
                     account.get().getPassword(),
-                    parseToGrantedAuthority(account.get().getRoles())
+                    parseToGrantedAuthority(account.get().getRoles()),
+                    account.get().isAccountNonLocked()
             );
 
         }

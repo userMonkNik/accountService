@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +34,36 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private List<PaymentDetails> salaryDetailsList;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private boolean accountNonLocked;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private int failedAttempt;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private Date lockTime;
+
+    public boolean isAccountNonLocked() {
+        return accountNonLocked;
+    }
+
+    public void setAccountNonLocked(boolean accountNonLocked) {
+        this.accountNonLocked = accountNonLocked;
+    }
+
+    public int getFailedAttempt() {
+        return failedAttempt;
+    }
+
+    public void setFailedAttempt(int failedAttempt) {
+        this.failedAttempt = failedAttempt;
+    }
+
+    public Date getLockTime() {
+        return lockTime;
+    }
+
+    public void setLockTime(Date lockTime) {
+        this.lockTime = lockTime;
+    }
 
     public List<PaymentDetails> getSalaryDetailsList() {
         return salaryDetailsList;
