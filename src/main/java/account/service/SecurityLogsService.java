@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SecurityLogsService {
@@ -29,5 +32,12 @@ public class SecurityLogsService {
                         request.getRequestURI()
                 )
         );
+    }
+
+    public List<SecurityLogs> getSecurityLogsListSortedById() {
+
+        return repository.findAll().stream()
+                .sorted(Comparator.comparing(SecurityLogs::getId))
+                .collect(Collectors.toList());
     }
 }

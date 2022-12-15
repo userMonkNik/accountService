@@ -4,6 +4,7 @@ import account.dto.*;
 import account.entity.Account;
 import account.entity.PaymentDetails;
 import account.entity.Role;
+import account.entity.SecurityLogs;
 import account.exception.*;
 import account.repository.AccountRepository;
 import account.repository.BreachedPasswordRepository;

@@ -22,6 +22,7 @@ public class RolesDbLoader {
             roleRepository.save(new Role("ROLE_ADMINISTRATOR", "Administrator"));
             roleRepository.save(new Role("ROLE_USER", "User"));
             roleRepository.save(new Role("ROLE_ACCOUNTANT", "Accountant"));
+            roleRepository.save(new Role("ROLE_AUDITOR", "Auditor"));
 
         } catch (Exception ignore) {
 

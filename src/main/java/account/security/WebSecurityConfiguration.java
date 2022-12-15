@@ -40,6 +40,8 @@ public class WebSecurityConfiguration {
                 .antMatchers("/api/admin/**").hasRole("ADMINISTRATOR")
                 .antMatchers("/api/empl/payment").hasAnyRole("USER", "ACCOUNTANT")
                 .antMatchers("/api/acct/**").hasRole("ACCOUNTANT")
+                .antMatchers("/api/security/**").hasRole("AUDITOR")
+                .antMatchers("/api/auth/changepass").hasAnyRole("USER", "ADMINISTRATOR", "ACCOUNTANT")
                 .antMatchers("/api/auth/signup").permitAll()
                 .antMatchers("/h2/**").permitAll()
                 .anyRequest().authenticated()

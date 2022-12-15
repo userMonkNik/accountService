@@ -10,7 +10,7 @@ public class ChangeRole {
     private String user;
     @NotEmpty(message = "User role cannot be empty or undefined")
     private String role;
-    @Pattern(regexp = "(GRANT)|(REMOVE)",
+    @Pattern(regexp = "(?i)(GRANT)|(REMOVE)",
             message = "Wrong option. Available options: GRANT or REMOVE")
     @NotNull(message = "Operation cannot be undefined")
     private String operation;
@@ -24,6 +24,6 @@ public class ChangeRole {
     }
 
     public String getOperation() {
-        return operation;
+        return operation.toUpperCase();
     }
 }
