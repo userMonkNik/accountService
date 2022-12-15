@@ -9,11 +9,15 @@ import account.repository.AccountRepository;
 import account.repository.BreachedPasswordRepository;
 import account.repository.PaymentRepository;
 import account.repository.RoleRepository;
+import account.util.Action;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -26,22 +30,25 @@ public class AccountService {
     private final BreachedPasswordRepository breachedPasswordRepository;
     private final PaymentRepository paymentRepository;
     private final RoleRepository roleRepository;
+    private final SecurityLogsService logService;
     public static final int MAX_FAILED_ATTEMPTS = 5;
     private static final long LOCK_TIME_DURATION = 24 * 60 * 60 * 1000;
 
     @Autowired
      public AccountService(
-             AccountRepository accountRepository,
-             BCryptPasswordEncoder passwordEncoder,
-             BreachedPasswordRepository breachedPasswordRepository,
-             PaymentRepository paymentRepository,
-             RoleRepository roleRepository) {
+            AccountRepository accountRepository,
+            BCryptPasswordEncoder passwordEncoder,
+            BreachedPasswordRepository breachedPasswordRepository,
+            PaymentRepository paymentRepository,
+            RoleRepository roleRepository,
+            SecurityLogsService logService) {
 
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.breachedPasswordRepository = breachedPasswordRepository;
         this.paymentRepository = paymentRepository;
         this.roleRepository = roleRepository;
+        this.logService = logService;
     }
 
     public Account signup(Account account) {
@@ -68,6 +75,14 @@ public class AccountService {
         account.setEmail(account.getEmail().toLowerCase(Locale.ROOT));
         account.setAccountNonLocked(true);
 
+
+        logService.log(
+                LocalDateTime.now(),
+                Action.CREATE_USER,
+                "Anonymous",
+                account.getEmail()
+        );
+
         return accountRepository.save(account);
     }
 
@@ -86,6 +101,13 @@ public class AccountService {
 
         account.setPassword(passwordEncoder.encode(password.getPassword()));
         accountRepository.save(account);
+
+        logService.log(
+                LocalDateTime.now(),
+                Action.CHANGE_PASSWORD,
+                account.getEmail(),
+                account.getEmail()
+        );
 
         return new ChangePasswordResponse(account.getEmail(), "The password has been updated successfully");
     }
@@ -169,21 +191,21 @@ public class AccountService {
                 .collect(Collectors.toList());
     }
 
-    public Account changeUserRole(ChangeRole role) {
+    public Account changeUserRole(ChangeRole role, String adminEmail) {
 
         Account account = getAccountByEmail(role.getUser());
 
         if (role.getOperation().equals("GRANT")) {
 
-            return grantRole(account, role.getRole());
+            return grantRole(account, role.getRole(), adminEmail);
 
         } else {
 
-            return removeRole(account, role.getRole());
+            return removeRole(account, role.getRole(), adminEmail);
         }
     }
 
-    public AccountResponse deleteAccount(String email) {
+    public AccountResponse deleteAccount(String email, String adminEmail) {
 
         Account account = getAccountByEmail(email);
 
@@ -193,6 +215,13 @@ public class AccountService {
         }
 
         accountRepository.delete(account);
+
+        logService.log(
+                LocalDateTime.now(),
+                Action.DELETE_USER,
+                adminEmail,
+                account.getEmail()
+        );
 
         return new AccountResponse(email, "Deleted successfully!");
     }
@@ -208,7 +237,7 @@ public class AccountService {
         accountRepository.updateFailedAttempts(0, email);
     }
 
-    public StatusResponse lockAccount(Account account) {
+    public StatusResponse lockAccount(Account account, String adminEmail) {
 
         if (!account.isAccountNonLocked()) {
             throw new LockException("Account already blocked.");
@@ -221,12 +250,19 @@ public class AccountService {
         account.setLockTime(new Date());
         accountRepository.save(account);
 
+        logService.log(
+                LocalDateTime.now(),
+                Action.LOCK_USER,
+                adminEmail,
+                "Lock user " + account.getEmail()
+        );
+
         return new StatusResponse(String.format(
                 "User %s locked!", account.getEmail()
         ));
     }
 
-    private StatusResponse unlockAccount(Account account) {
+    private StatusResponse unlockAccount(Account account, String adminEmail) {
 
         if (account.isAccountNonLocked()) {
             throw new LockException("Account already unlocked");
@@ -236,6 +272,13 @@ public class AccountService {
         account.setLockTime(null);
         account.setFailedAttempt(0);
         accountRepository.save(account);
+
+        logService.log(
+                LocalDateTime.now(),
+                Action.UNLOCK_USER,
+                adminEmail,
+                "Unlock user " + account.getEmail()
+        );
 
         return new StatusResponse(String.format(
                 "User %s unlocked!", account.getEmail()
@@ -253,26 +296,33 @@ public class AccountService {
 
             accountRepository.save(account);
 
+            logService.log(
+                    LocalDateTime.now(),
+                    Action.UNLOCK_USER,
+                    "Server",
+                    "Unlock user " + account.getEmail()
+            );
+
             return true;
         }
 
         return false;
     }
 
-    public StatusResponse putUserAccess(ChangeAccess changeAccess) throws LockException {
+    public StatusResponse putUserAccess(ChangeAccess changeAccess, String adminEmail) throws LockException {
         Account account = getAccountByEmail(changeAccess.getUser());
 
         switch (changeAccess.getOperation()) {
             case "LOCK" :
-                return lockAccount(account);
+                return lockAccount(account, adminEmail);
             case "UNLOCK" :
-                return unlockAccount(account);
+                return unlockAccount(account, adminEmail);
             default :
                 return null;
         }
     }
 
-    private Account grantRole(Account account, String grantedRole) {
+    private Account grantRole(Account account, String grantedRole, String adminEmail) {
         List<String> currentRoles = account.getRoles();
 
         if (currentRoles.contains(grantedRole)) {
@@ -289,10 +339,17 @@ public class AccountService {
         Role role = getAccountRole(grantedRole);
         account.addRole(role);
 
+        logService.log(
+                LocalDateTime.now(),
+                Action.GRANT_ROLE,
+                adminEmail,
+                String.format("Grant role %s to %s", grantedRole.substring(5), account.getEmail())
+        );
+
         return accountRepository.save(account);
     }
 
-    private Account removeRole(Account account, String roleToRemove) {
+    private Account removeRole(Account account, String roleToRemove, String adminEmail) {
         List<String> currentRoles = account.getRoles();
 
         if (isAdministrator(currentRoles) &&
@@ -312,6 +369,13 @@ public class AccountService {
 
         Role role = getAccountRole(roleToRemove);
         account.removeRole(role);
+
+        logService.log(
+                LocalDateTime.now(),
+                Action.REMOVE_ROLE,
+                adminEmail,
+                String.format("Remove role %s to %s", roleToRemove.substring(5), account.getEmail())
+        );
 
         return accountRepository.save(account);
     }

@@ -9,6 +9,8 @@ import account.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -32,20 +34,20 @@ public class AdministratorController {
     }
 
     @DeleteMapping("/user/{email}")
-    public ResponseEntity<AccountResponse> deleteUser(@PathVariable String email) {
+    public ResponseEntity<AccountResponse> deleteUser(Authentication auth, @PathVariable String email) {
 
-        return new ResponseEntity<>(accountService.deleteAccount(email), HttpStatus.OK);
+        return new ResponseEntity<>(accountService.deleteAccount(email, auth.getName()), HttpStatus.OK);
     }
 
     @PutMapping("/user/role")
-    public ResponseEntity<Account> putUserRole(@Valid @RequestBody ChangeRole role) {
+    public ResponseEntity<Account> putUserRole(Authentication auth, @Valid @RequestBody ChangeRole role) {
 
-        return new ResponseEntity<>(accountService.changeUserRole(role), HttpStatus.OK);
+        return new ResponseEntity<>(accountService.changeUserRole(role, auth.getName()), HttpStatus.OK);
     }
 
     @PutMapping("/user/access")
-    public ResponseEntity<StatusResponse> putUserAccess(@Valid @RequestBody ChangeAccess changeAccess) {
+    public ResponseEntity<StatusResponse> putUserAccess(Authentication auth, @Valid @RequestBody ChangeAccess changeAccess) {
 
-        return new ResponseEntity<>(accountService.putUserAccess(changeAccess), HttpStatus.OK);
+        return new ResponseEntity<>(accountService.putUserAccess(changeAccess, auth.getName()), HttpStatus.OK);
     }
 }

@@ -1,8 +1,9 @@
 package account.security;
 
 import account.entity.Account;
-import account.exception.AccountNotExistsException;
 import account.service.AccountService;
+import account.service.SecurityLogsService;
+import account.util.Action;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,24 +18,30 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Component
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Autowired
-    private AccountService service;
+    private AccountService accountService;
+    @Autowired
+    private SecurityLogsService logService;
     private final ObjectMapper mapper = new ObjectMapper();
 
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+    public void commence(HttpServletRequest request,
+                         HttpServletResponse response,
+                         AuthenticationException authException)
             throws IOException, ServletException {
 
         String email = getLoginFromAuthorization(request.getHeader("authorization"));
 
         Account account = null;
         try {
-            account = service.getAccountByEmail(email);
+            account = accountService.getAccountByEmail(email);
         } catch (Exception e) {
             authException = new LockedException("Wrong login.");
         }
@@ -43,21 +50,34 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
             if (account.isAccountNonLocked()) {
 
-                if (account.getFailedAttempt() < AccountService.MAX_FAILED_ATTEMPTS - 1) {
-                    service.increaseFailedAttempt(account);
+                if (account.getRoles().contains("ROLE_ADMINISTRATOR")) {
+
+                    authException = new LockedException("Wrong password");
+
+                } else if (account.getFailedAttempt() < AccountService.MAX_FAILED_ATTEMPTS - 1) {
+
+                    accountService.increaseFailedAttempt(account);
                     authException = new LockedException(
                             String.format("Your account will be locked after %d incorrect attempt.",
                                     AccountService.MAX_FAILED_ATTEMPTS - (account.getFailedAttempt() + 1))
                     );
                 } else {
-                    service.lockAccount(account);
+
+                    logService.log(
+                            LocalDateTime.now(),
+                            Action.BRUTE_FORCE,
+                            account.getEmail(),
+                            request.getRequestURI()
+                    );
+
+                    accountService.lockAccount(account, account.getEmail());
                     authException = new LockedException("Your account has been locked due to 5 failed attempts."
                             + " It will be unlocked after 24 hours.");
                 }
 
             } else {
 
-                if (service.unlockWhenTimeExpired(account)) {
+                if (accountService.unlockWhenTimeExpired(account)) {
                     authException = new LockedException("Your account has been unlocked. Please try to login again.");
                 } else {
                     authException = new LockedException("Your account was locked. Please try again later.");
