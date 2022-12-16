@@ -375,7 +375,7 @@ public class AccountService {
                 LocalDateTime.now(),
                 Action.REMOVE_ROLE,
                 adminEmail,
-                String.format("Remove role %s to %s", roleToRemove.substring(5), account.getEmail())
+                String.format("Remove role %s from %s", roleToRemove.substring(5), account.getEmail())
         );
 
         return accountRepository.save(account);

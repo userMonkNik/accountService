@@ -80,7 +80,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
                 if (accountService.unlockWhenTimeExpired(account)) {
                     authException = new LockedException("Your account has been unlocked. Please try to login again.");
                 } else {
-                    authException = new LockedException("Your account was locked. Please try again later.");
+                    authException = new LockedException("User account is locked");
                 }
             }
 

@@ -26,7 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Optional<Account> account = repository.findByEmail(email.toLowerCase(Locale.ROOT));
 
-        if (account.isPresent()) {
+        if (account.isPresent() && account.get().isAccountNonLocked()) {
 
             return new UserDetailsImpl(
                     account.get().getEmail(),
